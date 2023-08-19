@@ -259,7 +259,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                     );
                                   },
                                   child: SizedBox(
-                                    width: 100,
+                                    width: 80,
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
@@ -275,12 +275,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 8.0),
                                         Flexible(
-                                          child: Text(
+                                          child: // 수정된 코드:
+                                              Text(
                                             snapshot.data!.results[index].title,
-                                            style:
-                                                const TextStyle(fontSize: 16),
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             textAlign: TextAlign.center,
