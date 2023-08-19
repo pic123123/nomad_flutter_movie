@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:nomad_flutter_movie/movie_detail_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -149,146 +150,221 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
         backgroundColor: Colors.grey[900],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            // 이 부분 추가
-            padding: const EdgeInsets.all(8.0),
-            child: const Text(
-              "Popular Movies",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: FutureBuilder<MovieResponse>(
-                future: futurePopularMovies,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: snapshot.data!.results.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.network(
-                            'https://image.tmdb.org/t/p/w500${snapshot.data!.results[index].posterPath}',
-                          ),
-                        );
-                      },
-                    );
-                  } else if (snapshot.hasError) {
-                    return Text("${snapshot.error}");
-                  }
-
-                  return const CircularProgressIndicator();
-                },
+      body: Container(
+        color: Colors.grey[900],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              // 이 부분 추가
+              padding: const EdgeInsets.all(8.0),
+              child: const Text(
+                "Popular Movies",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    "Now in cinemas",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: FutureBuilder<MovieResponse>(
-                    future: futureNowPlayingMovies,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: snapshot.data!.results.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                width: 100, // 이미지와 텍스트의 최대 너비를 설정합니다.
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    AspectRatio(
-                                      aspectRatio: 0.7,
-                                      child: ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        child: Image.network(
-                                          'https://image.tmdb.org/t/p/w500${snapshot.data!.results[index].posterPath}',
-                                          fit: BoxFit.fitHeight,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                        height: 8.0), // 제목과 이미지 사이의 간격을 추가
-                                    Flexible(
-                                      child: Text(
-                                        snapshot.data!.results[index].title,
-                                        style: const TextStyle(fontSize: 16),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+            Expanded(
+              child: Center(
+                child: FutureBuilder<MovieResponse>(
+                  future: futurePopularMovies,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: snapshot.data!.results.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                              onTap: () async {
+                                // 영화 ID를 가져와서 상세 정보를 불러옵니다.
+                                final response = await http.get(
+                                  Uri.parse(
+                                      'https://movies-api.nomadcoders.workers.dev/movie?id=${snapshot.data!.results[index].id}'),
+                                );
+                                final data = jsonDecode(response.body);
+                                final movieDetail = MovieDetail.fromJson(data);
+
+                                // 이제 불러온 정보를 담은 MovieDetailScreen을 띄웁니다.
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MovieDetailScreen(detail: movieDetail),
+                                  ),
+                                );
+                              },
+                              child: Image.network(
+                                'https://image.tmdb.org/t/p/w500${snapshot.data!.results[index].posterPath}',
                               ),
-                            );
-                          },
-                        );
-                      } else if (snapshot.hasError) {
-                        return Text("${snapshot.error}");
-                      }
+                            ),
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text("${snapshot.error}");
+                    }
 
-                      return const CircularProgressIndicator();
-                    },
-                  ),
+                    return const CircularProgressIndicator();
+                  },
                 ),
-              ],
-            ),
-          ),
-          Container(
-            // 이 부분 추가
-            padding: const EdgeInsets.all(8.0),
-            child: const Text(
-              "Comming Soon",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: FutureBuilder<MovieResponse>(
-                future: futureComingSoonMovies,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: snapshot.data!.results.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.network(
-                            'https://image.tmdb.org/t/p/w500${snapshot.data!.results[index].posterPath}',
-                          ),
-                        );
-                      },
-                    );
-                  } else if (snapshot.hasError) {
-                    return Text("${snapshot.error}");
-                  }
-
-                  return const CircularProgressIndicator();
-                },
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      "Now in cinemas",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: FutureBuilder<MovieResponse>(
+                      future: futureNowPlayingMovies,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: snapshot.data!.results.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final response = await http.get(
+                                      Uri.parse(
+                                          'https://movies-api.nomadcoders.workers.dev/movie?id=${snapshot.data!.results[index].id}'),
+                                    );
+                                    final data = jsonDecode(response.body);
+                                    final movieDetail =
+                                        MovieDetail.fromJson(data);
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MovieDetailScreen(
+                                            detail: movieDetail),
+                                      ),
+                                    );
+                                  },
+                                  child: SizedBox(
+                                    width: 100,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        AspectRatio(
+                                          aspectRatio: 0.7,
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            child: Image.network(
+                                              'https://image.tmdb.org/t/p/w500${snapshot.data!.results[index].posterPath}',
+                                              fit: BoxFit.fitHeight,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8.0),
+                                        Flexible(
+                                          child: Text(
+                                            snapshot.data!.results[index].title,
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        } else if (snapshot.hasError) {
+                          return Text("${snapshot.error}");
+                        }
+
+                        return const CircularProgressIndicator();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              // 이 부분 추가
+              padding: const EdgeInsets.all(8.0),
+              child: const Text(
+                "Comming Soon",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: FutureBuilder<MovieResponse>(
+                  future: futureComingSoonMovies,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: snapshot.data!.results.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                              onTap: () async {
+                                // 영화 ID를 가져와서 상세 정보를 불러옵니다.
+                                final response = await http.get(
+                                  Uri.parse(
+                                      'https://movies-api.nomadcoders.workers.dev/movie?id=${snapshot.data!.results[index].id}'),
+                                );
+                                final data = jsonDecode(response.body);
+                                final movieDetail = MovieDetail.fromJson(data);
+
+                                // 이제 불러온 정보를 담은 MovieDetailScreen을 띄웁니다.
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MovieDetailScreen(detail: movieDetail),
+                                  ),
+                                );
+                              },
+                              child: Image.network(
+                                'https://image.tmdb.org/t/p/w500${snapshot.data!.results[index].posterPath}',
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text("${snapshot.error}");
+                    }
+
+                    return const CircularProgressIndicator();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
